@@ -1,0 +1,81 @@
+from tkinter import *
+from tkinter import ttk
+import numpy as np
+import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+from sklearn import tree
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score
+
+# Load datasets
+df_train = pd.read_csv("Training.csv")
+df_test = pd.read_csv("Testing.csv")
+
+# Symptom and disease lists
+symptoms_list = df_train.columns[:-1]
+diseases_list = df_train["prognosis"].unique()
+
+# Features and labels
+X_train = df_train[symptoms_list]
+y_train = df_train["prognosis"]
+
+X_test = df_test[symptoms_list]
+y_test = df_test["prognosis"]
+
+# Train classifiers
+dt_model = tree.DecisionTreeClassifier().fit(X_train, y_train)
+rf_model = RandomForestClassifier().fit(X_train, y_train)
+nb_model = GaussianNB().fit(X_train, y_train)
+
+# GUI Function
+def predict_disease():
+    symptoms_input = [0] * len(symptoms_list)
+    selected_symptoms = [symptom1_var.get(), symptom2_var.get(), symptom3_var.get(), symptom4_var.get(), symptom5_var.get()]
+    for symptom in selected_symptoms:
+        if symptom in symptoms_list:
+            symptoms_input[symptoms_list.get_loc(symptom)] = 1
+    
+    prediction_dt = dt_model.predict([symptoms_input])[0]
+    prediction_rf = rf_model.predict([symptoms_input])[0]
+    prediction_nb = nb_model.predict([symptoms_input])[0]
+
+    result_dt.set(f"Decision Tree: {prediction_dt}")
+    result_rf.set(f"Random Forest: {prediction_rf}")
+    result_nb.set(f"Naive Bayes: {prediction_nb}")
+
+# GUI Setup
+root = Tk()
+root.title("Disease Prediction System")
+
+symptom1_var = StringVar()
+symptom2_var = StringVar()
+symptom3_var = StringVar()
+symptom4_var = StringVar()
+symptom5_var = StringVar()
+
+Label(root, text="Symptom 1").grid(row=1, column=0)
+Label(root, text="Symptom 2").grid(row=2, column=0)
+Label(root, text="Symptom 3").grid(row=3, column=0)
+Label(root, text="Symptom 4").grid(row=4, column=0)
+Label(root, text="Symptom 5").grid(row=5, column=0)
+
+# Drop-downs for selecting symptoms
+symptom_options = list(symptoms_list)
+OptionMenu(root, symptom1_var, *symptom_options).grid(row=1, column=1)
+OptionMenu(root, symptom2_var, *symptom_options).grid(row=2, column=1)
+OptionMenu(root, symptom3_var, *symptom_options).grid(row=3, column=1)
+OptionMenu(root, symptom4_var, *symptom_options).grid(row=4, column=1)
+OptionMenu(root, symptom5_var, *symptom_options).grid(row=5, column=1)
+
+Button(root, text="Predict Disease", command=predict_disease).grid(row=6, column=1)
+
+# Output labels
+result_dt = StringVar()
+result_rf = StringVar()
+result_nb = StringVar()
+
+Label(root, textvariable=result_dt).grid(row=8, column=0, columnspan=2)
+Label(root, textvariable=result_rf).grid(row=9, column=0, columnspan=2)
+Label(root, textvariable=result_nb).grid(row=10, column=0, columnspan=2)
+
+root.mainloop()
